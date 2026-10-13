@@ -4,6 +4,7 @@ var ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
+  "./logic.js",
   "./app.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",

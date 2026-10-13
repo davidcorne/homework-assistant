@@ -52,11 +52,26 @@ screen and on the cards, so you can tell at a glance which fortnight you are on.
 
 Words are stored in the browser on the device you are using.
 
+## Tests
+
+The pure logic (parsing, storage migration, shuffle, routing helpers) lives in
+`logic.js` and is covered by unit tests using Node's built-in test runner — no
+dependencies.
+
+```
+npm test
+```
+
+Run `node --test` directly if you prefer.
+
 ## Files
 
 - `index.html` - the three screens
 - `styles.css` - the paper-card look
-- `app.js` - storage, card logic, service worker registration
+- `logic.js` - pure, testable helpers shared by the app and the tests
+- `app.js` - DOM wiring, storage, card logic, service worker registration
+- `logic.test.js` - unit tests for `logic.js`
+- `package.json` - `npm test` script
 - `manifest.webmanifest` - PWA metadata (name, colors, icons)
 - `sw.js` - service worker for offline caching
 - `icons/` - app icons (192, 512, maskable, apple-touch)

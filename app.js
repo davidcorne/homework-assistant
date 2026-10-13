@@ -3,47 +3,17 @@
 
   var STORAGE_KEY = "homework-assistant.v1";
 
-  var DEFAULT_DATA = {
-    name: "Weeks 7&8",
-    spelling: {
-      words: ["mum", "zap", "vans", "wins", "wet", "fox", "zip", "jug", "vet"]
-    },
-    phonics: {
-      sounds: ["v", "w", "x", "b", "z"]
-    }
-  };
+  var Logic = (typeof window !== "undefined" && window.HomeworkLogic) || {};
+
+  var normalize = Logic.normalize;
+  var parseList = Logic.parseList;
+  var shuffleArray = Logic.shuffleArray;
+  var countText = Logic.countText;
 
   var els = {};
   var data = null;
 
   // ---- Storage ----------------------------------------------------------
-
-  function clone(obj) {
-    return JSON.parse(JSON.stringify(obj));
-  }
-
-  function normalize(raw) {
-    var out = clone(DEFAULT_DATA);
-    if (!raw || typeof raw !== "object") return out;
-
-    if (typeof raw.name === "string") {
-      out.name = raw.name;
-    } else if (raw.spelling && typeof raw.spelling.name === "string") {
-      out.name = raw.spelling.name;
-    }
-
-    if (raw.spelling && typeof raw.spelling === "object") {
-      if (Array.isArray(raw.spelling.words)) {
-        out.spelling.words = raw.spelling.words.filter(function (w) { return typeof w === "string"; });
-      }
-    }
-    if (raw.phonics && typeof raw.phonics === "object") {
-      if (Array.isArray(raw.phonics.sounds)) {
-        out.phonics.sounds = raw.phonics.sounds.filter(function (s) { return typeof s === "string"; });
-      }
-    }
-    return out;
-  }
 
   function load() {
     var stored = null;
@@ -73,7 +43,7 @@
   }
 
   function screenUrl(name) {
-    return location.pathname + location.search + (name === "home" ? "" : "#" + name);
+    return Logic.screenUrl(location.pathname + location.search, name);
   }
 
   function pushScreen(name) {
@@ -81,8 +51,7 @@
   }
 
   function screenFromHash() {
-    var h = location.hash.replace("#", "");
-    return h === "cards" || h === "manage" ? h : "home";
+    return Logic.screenFromHash(location.hash);
   }
 
   function goBack() {
@@ -111,11 +80,6 @@
     els.homePhonicsMeta.textContent = countText(data.phonics.sounds, "sound");
   }
 
-  function countText(items, label) {
-    if (!items.length) return "empty - tap to add";
-    return items.length + " " + label + "s";
-  }
-
   // ---- Cards ------------------------------------------------------------
 
   var deck = { mode: null, items: [], index: 0 };
@@ -135,15 +99,6 @@
     showScreen("screen-cards");
     renderCard();
     pushScreen("cards");
-  }
-
-  function shuffleArray(arr) {
-    for (var i = arr.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = arr[i];
-      arr[i] = arr[j];
-      arr[j] = t;
-    }
   }
 
   function renderCard() {
@@ -201,19 +156,6 @@
     populateManage();
     showScreen("screen-manage");
     pushScreen("manage");
-  }
-
-  function parseList(text) {
-    var seen = {};
-    return text.split(/\r?\n|,/).map(function (s) {
-      return s.trim();
-    }).filter(function (s) {
-      if (!s) return false;
-      var key = s.toLowerCase();
-      if (seen[key]) return false;
-      seen[key] = true;
-      return true;
-    });
   }
 
   function saveManage() {
