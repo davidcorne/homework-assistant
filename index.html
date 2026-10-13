@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#FAF7F0" />
+  <title>Homework Assistant</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Homework" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- HOME -->
+    <section class="screen is-active" id="screen-home">
+      <header class="home-head">
+        <h1 class="app-title">Homework</h1>
+        <p class="app-sub" id="home-set-name"></p>
+      </header>
+
+      <div class="mode-list">
+        <button class="mode-btn" data-mode="spelling">
+          <span class="mode-name">Spelling</span>
+          <span class="mode-meta" id="home-spelling-meta"></span>
+        </button>
+        <button class="mode-btn" data-mode="phonics">
+          <span class="mode-name">Phonics</span>
+          <span class="mode-meta" id="home-phonics-meta"></span>
+        </button>
+      </div>
+
+      <footer class="home-foot">
+        <button class="link-btn" id="go-manage">Manage words</button>
+      </footer>
+    </section>
+
+    <!-- CARDS -->
+    <section class="screen" id="screen-cards">
+      <header class="card-top">
+        <button class="icon-btn" id="cards-back" aria-label="Back">&#8592;</button>
+        <span class="card-set-name" id="cards-name"></span>
+        <span class="card-progress" id="cards-progress"></span>
+      </header>
+
+      <main class="card-stage">
+        <button class="paper-card" id="paper-card" aria-label="Next card">
+          <span class="card-word" id="card-word"></span>
+        </button>
+        <p class="card-hint" id="cards-hint">Say it out loud</p>
+      </main>
+
+      <footer class="card-bottom">
+        <button class="icon-btn" id="cards-prev" aria-label="Previous card">&#8592;</button>
+        <button class="icon-btn icon-btn--primary" id="cards-next" aria-label="Next card">&#8594;</button>
+      </footer>
+    </section>
+
+    <!-- MANAGE -->
+    <section class="screen" id="screen-manage">
+      <header class="card-top">
+        <button class="icon-btn" id="manage-back" aria-label="Back">&#8592;</button>
+        <span class="card-set-name">Manage words</span>
+        <span class="card-progress"></span>
+      </header>
+
+      <main class="manage-body">
+        <div class="field">
+          <label class="field-label" for="set-name">Set name</label>
+          <input class="text-input" type="text" id="set-name" placeholder="e.g. Weeks 7&amp;8" />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="spelling-input">Spelling words <span class="field-note">one per line</span></label>
+          <textarea class="text-area" id="spelling-input" rows="6" spellcheck="false" placeholder="mum&#10;zap&#10;vans"></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="phonics-input">Phonics sounds <span class="field-note">one per line</span></label>
+          <textarea class="text-area" id="phonics-input" rows="4" spellcheck="false" placeholder="v&#10;w&#10;x"></textarea>
+        </div>
+
+        <p class="manage-msg" id="manage-msg" role="status"></p>
+
+        <div class="manage-actions">
+          <button class="pill-btn pill-btn--primary" id="manage-save">Save</button>
+        </div>
+
+        <div class="manage-transfer">
+          <button class="pill-btn" id="manage-export">Export backup</button>
+          <button class="pill-btn" id="manage-import">Import backup</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden />
+        </div>
+      </main>
+    </section>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
