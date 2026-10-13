@@ -50,19 +50,13 @@ no network. Notes:
 Blank lines and duplicate entries are ignored. The set name is shown on the Home
 screen and on the cards, so you can tell at a glance which fortnight you are on.
 
-## Backups and moving between devices
-
-- **Export backup** downloads a small JSON file with both lists.
-- **Import backup** loads one back in.
-
-Words are stored in the browser on the device you are using, so export before
-switching phone/tablet, reinstalling, or clearing browser data.
+Words are stored in the browser on the device you are using.
 
 ## Files
 
 - `index.html` - the three screens
 - `styles.css` - the paper-card look
-- `app.js` - storage, card logic, export/import, service worker registration
+- `app.js` - storage, card logic, service worker registration
 - `manifest.webmanifest` - PWA metadata (name, colors, icons)
 - `sw.js` - service worker for offline caching
 - `icons/` - app icons (192, 512, maskable, apple-touch)

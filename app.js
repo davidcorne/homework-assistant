@@ -234,48 +234,6 @@
     setMessage("Saved. " + words.length + " words, " + sounds.length + " sounds.", false);
   }
 
-  function exportBackup() {
-    var payload = {
-      name: data.name,
-      spelling: data.spelling,
-      phonics: data.phonics,
-      exported: new Date().toISOString()
-    };
-    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    var stamp = new Date().toISOString().slice(0, 10);
-    a.href = url;
-    a.download = "homework-backup-" + stamp + ".json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setMessage("Backup downloaded.", false);
-  }
-
-  function importBackup(file) {
-    var reader = new FileReader();
-    reader.onload = function () {
-      var parsed;
-      try {
-        parsed = JSON.parse(reader.result);
-      } catch (e) {
-        setMessage("That file is not valid backup JSON.", true);
-        return;
-      }
-      data = normalize(parsed);
-      persist();
-      populateManage();
-      updateHome();
-      setMessage("Backup imported.", false);
-    };
-    reader.onerror = function () {
-      setMessage("Could not read that file.", true);
-    };
-    reader.readAsText(file);
-  }
-
   function setMessage(text, isError) {
     els.manageMsg.textContent = text;
     els.manageMsg.classList.toggle("is-error", !!isError);
@@ -304,9 +262,6 @@
     els.phonicsInput = document.getElementById("phonics-input");
     els.manageMsg = document.getElementById("manage-msg");
     els.manageSave = document.getElementById("manage-save");
-    els.manageExport = document.getElementById("manage-export");
-    els.manageImport = document.getElementById("manage-import");
-    els.importFile = document.getElementById("import-file");
   }
 
   function bindEvents() {
@@ -326,12 +281,6 @@
     els.cardsPrev.addEventListener("click", prevCard);
 
     els.manageSave.addEventListener("click", saveManage);
-    els.manageExport.addEventListener("click", exportBackup);
-    els.manageImport.addEventListener("click", function () { els.importFile.click(); });
-    els.importFile.addEventListener("change", function () {
-      if (this.files && this.files[0]) importBackup(this.files[0]);
-      this.value = "";
-    });
 
     window.addEventListener("resize", function () {
       if (document.getElementById("screen-cards").classList.contains("is-active")) fitCard();

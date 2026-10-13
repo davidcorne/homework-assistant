@@ -306,15 +306,9 @@ body {
   color: #b0472f;
 }
 
-.manage-actions,
-.manage-transfer {
+.manage-actions {
   display: flex;
   gap: 12px;
-}
-
-.manage-transfer {
-  border-top: 1px solid var(--line);
-  padding-top: 18px;
 }
 
 .pill-btn {
