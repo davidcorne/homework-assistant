@@ -64,6 +64,16 @@ npm test
 
 Run `node --test` directly if you prefer.
 
+## Deployment
+
+Deployment is automated by GitHub Actions (`.github/workflows/deploy.yml`).
+Every push and pull request runs the unit tests. A push to `main` deploys to
+GitHub Pages **only if the tests pass** — a failing test blocks the deploy.
+(The Pages source is set to **GitHub Actions**, not a branch.)
+
+Because the service worker caches files, bump the cache version in `sw.js`
+when you want installed devices to pick up a change.
+
 ## Files
 
 - `index.html` - the three screens
@@ -75,6 +85,7 @@ Run `node --test` directly if you prefer.
 - `manifest.webmanifest` - PWA metadata (name, colors, icons)
 - `sw.js` - service worker for offline caching
 - `icons/` - app icons (192, 512, maskable, apple-touch)
+- `.github/workflows/deploy.yml` - test, then deploy to Pages if tests pass
 
 ## Default (seed) content
 
