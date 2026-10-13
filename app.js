@@ -72,6 +72,39 @@
     }
   }
 
+  function screenUrl(name) {
+    return location.pathname + location.search + (name === "home" ? "" : "#" + name);
+  }
+
+  function pushScreen(name) {
+    history.pushState({ screen: name }, "", screenUrl(name));
+  }
+
+  function screenFromHash() {
+    var h = location.hash.replace("#", "");
+    return h === "cards" || h === "manage" ? h : "home";
+  }
+
+  function goBack() {
+    if (history.state && history.state.screen && history.state.screen !== "home") {
+      history.back();
+    } else {
+      showScreen("screen-home");
+    }
+  }
+
+  function handlePopState(event) {
+    var screen = (event.state && event.state.screen) || screenFromHash();
+    if (screen === "cards" && deck.items.length) {
+      showScreen("screen-cards");
+    } else if (screen === "manage") {
+      populateManage();
+      showScreen("screen-manage");
+    } else {
+      showScreen("screen-home");
+    }
+  }
+
   function updateHome() {
     els.homeSetName.textContent = data.name;
     els.homeSpellingMeta.textContent = countText(data.spelling.words, "word");
@@ -101,6 +134,7 @@
     els.cardsName.textContent = data.name;
     showScreen("screen-cards");
     renderCard();
+    pushScreen("cards");
   }
 
   function shuffleArray(arr) {
@@ -157,11 +191,16 @@
 
   // ---- Manage -----------------------------------------------------------
 
-  function openManage() {
+  function populateManage() {
     els.setName.value = data.name;
     els.spellingInput.value = data.spelling.words.join("\n");
     els.phonicsInput.value = data.phonics.sounds.join("\n");
+  }
+
+  function openManage() {
+    populateManage();
     showScreen("screen-manage");
+    pushScreen("manage");
   }
 
   function parseList(text) {
@@ -227,7 +266,7 @@
       }
       data = normalize(parsed);
       persist();
-      openManage();
+      populateManage();
       updateHome();
       setMessage("Backup imported.", false);
     };
@@ -279,8 +318,8 @@
     }
 
     els.goManage.addEventListener("click", function () { setMessage("", false); openManage(); });
-    els.cardsBack.addEventListener("click", function () { showScreen("screen-home"); });
-    els.manageBack.addEventListener("click", function () { showScreen("screen-home"); });
+    els.cardsBack.addEventListener("click", goBack);
+    els.manageBack.addEventListener("click", goBack);
 
     els.paperCard.addEventListener("click", nextCard);
     els.cardsNext.addEventListener("click", nextCard);
@@ -306,8 +345,10 @@
       if (!onCards) return;
       if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); nextCard(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); prevCard(); }
-      else if (e.key === "Escape") { showScreen("screen-home"); }
+      else if (e.key === "Escape") { goBack(); }
     });
+
+    window.addEventListener("popstate", handlePopState);
   }
 
   function registerServiceWorker() {
@@ -324,6 +365,7 @@
     bindEvents();
     updateHome();
     showScreen("screen-home");
+    history.replaceState({ screen: "home" }, "", screenUrl("home"));
     registerServiceWorker();
   }
 
