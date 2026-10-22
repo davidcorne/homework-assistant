@@ -59,8 +59,14 @@
       }
     }
     if (raw.tricky && typeof raw.tricky === "object") {
-      if (Array.isArray(raw.tricky.words)) {
-        out.tricky.words = raw.tricky.words.filter(function (w) { return typeof w === "string"; });
+      if (raw.tricky.empty === true) {
+        // The user deliberately cleared the list - keep it empty.
+        out.tricky = { words: [], empty: true };
+      } else if (Array.isArray(raw.tricky.words)) {
+        var trickyWords = raw.tricky.words.filter(function (w) { return typeof w === "string"; });
+        // An empty list without the marker means the list was never set up,
+        // so fall back to the seeded words rather than leaving it blank.
+        out.tricky.words = trickyWords.length ? trickyWords : clone(DEFAULT_TRICKY_WORDS);
       }
     }
     if (!out.tricky || !Array.isArray(out.tricky.words)) {

@@ -31,19 +31,23 @@ no network. Notes:
 
 ## Using it
 
-1. **Home** shows two buttons, *Spelling* and *Phonics*, with the current set
-   name and how many cards are in each.
+1. **Home** shows three buttons, *Spelling*, *Phonics* and *Tricky Words*, with
+   the current set name and how many cards are in each.
 2. **Cards** shows one big card at a time. Cards are always shuffled into a
    random order each time. Your child reads each one out loud to you.
    - Tap the card, or the right arrow, for the next card.
    - Left arrow goes back.
    - On a computer: `→` / `Space` = next, `←` = back, `Esc` = home.
+   - **Tricky Words** are practised in batches of ten: the list is shuffled and
+     handed out ten at a time, so every word is covered before any repeat. The
+     progress reads `7 / 10`. After the tenth card a **Finished!** panel appears
+     and the app returns to Home.
 3. **Manage words** (link at the bottom of Home) is where you edit the words.
 
 ## Adding a new set every 2 weeks
 
 1. Open **Manage words**.
-2. Give the set a name, e.g. `Weeks 7&8` (one name covers both lists).
+2. Give the set a name, e.g. `Weeks 7&8` (one name covers every list).
 3. Type or paste each list into its box, **one item per line** (commas also work).
 4. Press **Save**.
 
@@ -91,3 +95,4 @@ when you want installed devices to pick up a change.
 
 - Phonics: `v, w, x, b, z`
 - Spelling: `mum, zap, vans, wins, wet, fox, zip, jug, vet`
+- Tricky Words: the full Year 1/2 tricky word list (practised in batches of ten)

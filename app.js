@@ -207,9 +207,9 @@
 
   function populateManage() {
     els.setName.value = data.name;
-    els.spellingInput.value = data.spelling.words.join("\n");
-    els.phonicsInput.value = data.phonics.sounds.join("\n");
-    els.trickyInput.value = data.tricky.words.join("\n");
+    els.spellingInput.value = (data.spelling.words || []).join("\n");
+    els.phonicsInput.value = (data.phonics.sounds || []).join("\n");
+    els.trickyInput.value = (data.tricky.words || []).join("\n");
   }
 
   function openManage() {
@@ -231,7 +231,7 @@
     data.name = els.setName.value.trim() || "Untitled set";
     data.spelling.words = words;
     data.phonics.sounds = sounds;
-    data.tricky.words = tricky;
+    data.tricky = { words: tricky, empty: tricky.length === 0 };
     trickyPool = [];
 
     persist();

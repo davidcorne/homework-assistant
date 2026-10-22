@@ -68,6 +68,21 @@ test("normalize keeps tricky words and filters non-strings", () => {
   assert.deepEqual(d.tricky.words, ["because", "beautiful"]);
 });
 
+test("normalize reseeds tricky words when the stored list is empty", () => {
+  const d = normalize({ name: "Set", tricky: { words: [] } });
+  assert.deepEqual(d.tricky.words, DEFAULT_TRICKY_WORDS);
+});
+
+test("normalize keeps an empty tricky list that was deliberately cleared", () => {
+  const d = normalize({ name: "Set", tricky: { words: [], empty: true } });
+  assert.deepEqual(d.tricky.words, []);
+});
+
+test("normalize seeds tricky words when the stored shape is wrong", () => {
+  const d = normalize({ name: "Set", tricky: "nope" });
+  assert.deepEqual(d.tricky.words, DEFAULT_TRICKY_WORDS);
+});
+
 test("default tricky words are seeded as a plain word list", () => {
   assert.ok(DEFAULT_TRICKY_WORDS.length > 0);
   assert.ok(DEFAULT_TRICKY_WORDS.every((w) => typeof w === "string" && w.length > 0));
