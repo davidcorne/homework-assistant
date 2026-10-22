@@ -9,9 +9,12 @@
   var parseList = Logic.parseList;
   var shuffleArray = Logic.shuffleArray;
   var countText = Logic.countText;
+  var sessionBatch = Logic.sessionBatch;
 
   var els = {};
   var data = null;
+  var trickyPool = [];
+  var doneTimer = null;
 
   // ---- Storage ----------------------------------------------------------
 
@@ -78,21 +81,48 @@
     els.homeSetName.textContent = data.name;
     els.homeSpellingMeta.textContent = countText(data.spelling.words, "word");
     els.homePhonicsMeta.textContent = countText(data.phonics.sounds, "sound");
+    els.homeTrickyMeta.textContent = countText(data.tricky.words, "word");
   }
 
   // ---- Cards ------------------------------------------------------------
 
   var deck = { mode: null, items: [], index: 0 };
 
+  function listForMode(mode) {
+    if (mode === "spelling") return data.spelling.words;
+    if (mode === "phonics") return data.phonics.sounds;
+    if (mode === "tricky") return data.tricky.words;
+    return [];
+  }
+
+  function labelForMode(mode) {
+    if (mode === "spelling") return "spelling words";
+    if (mode === "phonics") return "phonics sounds";
+    if (mode === "tricky") return "tricky words";
+    return "words";
+  }
+
+  // Tricky words are practised in batches: the pool is shuffled once, then
+  // handed out ten at a time so every word is covered before any repeats.
+  function nextTrickyBatch() {
+    if (!trickyPool.length) {
+      trickyPool = shuffleArray(data.tricky.words.slice());
+    }
+    var batch = sessionBatch(trickyPool, Logic.BATCH_SIZE);
+    trickyPool = trickyPool.slice(batch.length);
+    return batch;
+  }
+
   function openDeck(mode) {
-    var list = mode === "spelling" ? data.spelling.words : data.phonics.sounds;
+    var list = listForMode(mode);
     if (!list.length) {
       openManage();
-      setMessage("Add some " + (mode === "spelling" ? "spelling words" : "phonics sounds") + " first.", true);
+      setMessage("Add some " + labelForMode(mode) + " first.", true);
       return;
     }
+    hideDone();
     deck.mode = mode;
-    deck.items = list.slice();
+    deck.items = mode === "tricky" ? nextTrickyBatch() : list.slice();
     shuffleArray(deck.items);
     deck.index = 0;
     els.cardsName.textContent = data.name;
@@ -103,11 +133,15 @@
 
   function renderCard() {
     var total = deck.items.length;
+    var isLast = deck.index === total - 1;
+    var isTricky = deck.mode === "tricky";
     els.cardWord.textContent = deck.items[deck.index];
     els.cardsProgress.textContent = (deck.index + 1) + " / " + total;
     els.cardsPrev.disabled = deck.index === 0;
-    els.cardsNext.disabled = deck.index === total - 1;
-    els.cardsHint.textContent = deck.index === total - 1 ? "Last one" : "Say it out loud";
+    els.cardsNext.disabled = isLast && !isTricky;
+    els.cardsNext.textContent = isLast && isTricky ? "✓" : "→";
+    els.cardsNext.setAttribute("aria-label", isLast && isTricky ? "Finish" : "Next card");
+    els.cardsHint.textContent = isLast ? (isTricky ? "Last one - tap to finish" : "Last one") : "Say it out loud";
     fitCard();
   }
 
@@ -119,7 +153,7 @@
 
     word.style.fontSize = "";
     var size = card.clientHeight - 48;
-    if (deck.mode === "phonics") size = Math.min(size, 150);
+    if (deck.mode === "phonics" || deck.mode === "tricky") size = Math.min(size, 150);
     word.style.fontSize = size + "px";
 
     var guard = 0;
@@ -134,7 +168,9 @@
     if (deck.index < deck.items.length - 1) {
       deck.index++;
       renderCard();
+      return;
     }
+    if (deck.mode === "tricky") finishBatch();
   }
 
   function prevCard() {
@@ -144,12 +180,36 @@
     }
   }
 
+  // ---- Finished ---------------------------------------------------------
+
+  function finishBatch() {
+    var count = deck.items.length;
+    els.cardDoneSub.textContent = count + " tricky " + (count === 1 ? "word" : "words") + " practised.";
+    els.cardDone.classList.add("is-active");
+    if (doneTimer) clearTimeout(doneTimer);
+    doneTimer = setTimeout(goHome, 2500);
+  }
+
+  function hideDone() {
+    if (doneTimer) {
+      clearTimeout(doneTimer);
+      doneTimer = null;
+    }
+    els.cardDone.classList.remove("is-active");
+  }
+
+  function goHome() {
+    hideDone();
+    goBack();
+  }
+
   // ---- Manage -----------------------------------------------------------
 
   function populateManage() {
     els.setName.value = data.name;
     els.spellingInput.value = data.spelling.words.join("\n");
     els.phonicsInput.value = data.phonics.sounds.join("\n");
+    els.trickyInput.value = data.tricky.words.join("\n");
   }
 
   function openManage() {
@@ -161,8 +221,9 @@
   function saveManage() {
     var words = parseList(els.spellingInput.value);
     var sounds = parseList(els.phonicsInput.value);
+    var tricky = parseList(els.trickyInput.value);
 
-    if (!words.length && !sounds.length) {
+    if (!words.length && !sounds.length && !tricky.length) {
       setMessage("Add at least one word or sound before saving.", true);
       return;
     }
@@ -170,10 +231,12 @@
     data.name = els.setName.value.trim() || "Untitled set";
     data.spelling.words = words;
     data.phonics.sounds = sounds;
+    data.tricky.words = tricky;
+    trickyPool = [];
 
     persist();
     updateHome();
-    setMessage("Saved. " + words.length + " words, " + sounds.length + " sounds.", false);
+    setMessage("Saved. " + words.length + " words, " + sounds.length + " sounds, " + tricky.length + " tricky words.", false);
   }
 
   function setMessage(text, isError) {
@@ -187,6 +250,7 @@
     els.homeSetName = document.getElementById("home-set-name");
     els.homeSpellingMeta = document.getElementById("home-spelling-meta");
     els.homePhonicsMeta = document.getElementById("home-phonics-meta");
+    els.homeTrickyMeta = document.getElementById("home-tricky-meta");
     els.goManage = document.getElementById("go-manage");
 
     els.cardsBack = document.getElementById("cards-back");
@@ -197,11 +261,15 @@
     els.cardsHint = document.getElementById("cards-hint");
     els.cardsPrev = document.getElementById("cards-prev");
     els.cardsNext = document.getElementById("cards-next");
+    els.cardDone = document.getElementById("card-done");
+    els.cardDoneSub = document.getElementById("card-done-sub");
+    els.cardDoneHome = document.getElementById("card-done-home");
 
     els.manageBack = document.getElementById("manage-back");
     els.setName = document.getElementById("set-name");
     els.spellingInput = document.getElementById("spelling-input");
     els.phonicsInput = document.getElementById("phonics-input");
+    els.trickyInput = document.getElementById("tricky-input");
     els.manageMsg = document.getElementById("manage-msg");
     els.manageSave = document.getElementById("manage-save");
   }
@@ -221,6 +289,7 @@
     els.paperCard.addEventListener("click", nextCard);
     els.cardsNext.addEventListener("click", nextCard);
     els.cardsPrev.addEventListener("click", prevCard);
+    els.cardDoneHome.addEventListener("click", goHome);
 
     els.manageSave.addEventListener("click", saveManage);
 

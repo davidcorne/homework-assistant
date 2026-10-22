@@ -8,6 +8,19 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
+  var BATCH_SIZE = 10;
+
+  var DEFAULT_TRICKY_WORDS = [
+    "1", "after", "again", "any", "are", "ask", "bath", "be", "beautiful",
+    "because", "behind", "both", "break", "busy", "by", "child", "children",
+    "Christmas", "class", "climb", "clothes", "cold", "come", "could", "do",
+    "door", "even", "every", "everybody", "eye", "fast", "father", "find",
+    "floor", "friend", "full", "go", "gold", "grass", "great", "half", "has",
+    "he", "here", "his", "sugar", "sure", "the", "there", "they", "to",
+    "today", "told", "was", "water", "we", "were", "where", "who", "whole",
+    "wild", "would", "you", "your"
+  ];
+
   var DEFAULT_DATA = {
     name: "Weeks 7&8",
     spelling: {
@@ -15,6 +28,9 @@
     },
     phonics: {
       sounds: ["v", "w", "x", "b", "z"]
+    },
+    tricky: {
+      words: DEFAULT_TRICKY_WORDS
     }
   };
 
@@ -40,6 +56,11 @@
     if (raw.phonics && typeof raw.phonics === "object") {
       if (Array.isArray(raw.phonics.sounds)) {
         out.phonics.sounds = raw.phonics.sounds.filter(function (s) { return typeof s === "string"; });
+      }
+    }
+    if (raw.tricky && typeof raw.tricky === "object") {
+      if (Array.isArray(raw.tricky.words)) {
+        out.tricky.words = raw.tricky.words.filter(function (w) { return typeof w === "string"; });
       }
     }
     return out;
@@ -73,6 +94,12 @@
     return items.length + " " + label + "s";
   }
 
+  // A practice session shows at most `size` cards.
+  function sessionBatch(items, size) {
+    var n = typeof size === "number" && size > 0 ? size : BATCH_SIZE;
+    return items.slice(0, n);
+  }
+
   function screenUrl(base, name) {
     return base + (name === "home" ? "" : "#" + name);
   }
@@ -83,12 +110,15 @@
   }
 
   return {
+    BATCH_SIZE: BATCH_SIZE,
+    DEFAULT_TRICKY_WORDS: DEFAULT_TRICKY_WORDS,
     DEFAULT_DATA: DEFAULT_DATA,
     clone: clone,
     normalize: normalize,
     parseList: parseList,
     shuffleArray: shuffleArray,
     countText: countText,
+    sessionBatch: sessionBatch,
     screenUrl: screenUrl,
     screenFromHash: screenFromHash
   };
