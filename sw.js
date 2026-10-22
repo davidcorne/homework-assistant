@@ -1,4 +1,4 @@
-var CACHE = "homework-assistant-v4";
+var CACHE = "homework-assistant-v5";
 
 var ASSETS = [
   "./",
