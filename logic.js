@@ -63,6 +63,9 @@
         out.tricky.words = raw.tricky.words.filter(function (w) { return typeof w === "string"; });
       }
     }
+    if (!out.tricky || !Array.isArray(out.tricky.words)) {
+      out.tricky = { words: clone(DEFAULT_TRICKY_WORDS) };
+    }
     return out;
   }
 
