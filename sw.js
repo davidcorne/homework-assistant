@@ -1,4 +1,4 @@
-var CACHE = "homework-assistant-v5";
+var CACHE = "homework-assistant-v6";
 
 var ASSETS = [
   "./",
@@ -33,39 +33,35 @@ self.addEventListener("activate", function (event) {
   );
 });
 
+function fromCache(req) {
+  return caches.match(req).then(function (cached) {
+    if (cached) return cached;
+    return req.mode === "navigate" ? caches.match("./index.html") : undefined;
+  });
+}
+
 self.addEventListener("fetch", function (event) {
   var req = event.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
 
-  if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req)
-        .then(function (res) {
+  // Network first, for pages and assets alike, so the HTML, scripts and styles
+  // a page loads always come from the same release. Without this a deploy can
+  // pair a fresh index.html with a stale app.js from the cache. The cache is
+  // only the offline fallback.
+  event.respondWith(
+    fetch(req)
+      .then(function (res) {
+        if (res && res.status === 200) {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put(req, copy); });
           return res;
-        })
-        .catch(function () {
-          return caches.match(req).then(function (r) {
-            return r || caches.match("./index.html");
-          });
-        })
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(req).then(function (cached) {
-      var network = fetch(req)
-        .then(function (res) {
-          if (res && res.status === 200) {
-            var copy = res.clone();
-            caches.open(CACHE).then(function (c) { c.put(req, copy); });
-          }
-          return res;
-        })
-        .catch(function () { return cached; });
-      return cached || network;
-    })
+        }
+        return fromCache(req).then(function (cached) { return cached || res; });
+      })
+      .catch(function () {
+        return fromCache(req).then(function (cached) {
+          return cached || Response.error();
+        });
+      })
   );
 });
