@@ -243,6 +243,67 @@ body {
   border-color: var(--accent);
 }
 
+/* ---- Finished ---- */
+.card-done {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(250, 247, 240, 0.94);
+}
+
+.card-done.is-active {
+  display: flex;
+  animation: fade 0.18s ease;
+}
+
+.card-done-box {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 24px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.card-done-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-done-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.card-done-sub {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.card-done-box .pill-btn {
+  margin-top: 12px;
+}
+
 /* ---- Manage ---- */
 .manage-body {
   flex: 1;
