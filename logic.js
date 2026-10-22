@@ -11,7 +11,7 @@
   var BATCH_SIZE = 10;
 
   var DEFAULT_TRICKY_WORDS = [
-    "1", "after", "again", "any", "are", "ask", "bath", "be", "beautiful",
+    "a", "after", "again", "any", "are", "ask", "bath", "be", "beautiful",
     "because", "behind", "both", "break", "busy", "by", "child", "children",
     "Christmas", "class", "climb", "clothes", "cold", "come", "could", "do",
     "door", "even", "every", "everybody", "eye", "fast", "father", "find",
