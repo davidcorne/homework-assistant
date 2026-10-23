@@ -7,14 +7,21 @@ const {
   BATCH_SIZE,
   DEFAULT_TRICKY_WORDS,
   DEFAULT_DATA,
+  DEFAULT_NUMBERS,
+  DEFAULT_JACKSON,
+  PROFILE_IDS,
   clone,
   normalize,
+  normalizeJackson,
+  normalizeStore,
   parseList,
   shuffleArray,
   countText,
   sessionBatch,
   screenUrl,
-  screenFromHash
+  screenFromHash,
+  routeUrl,
+  routeFromHash
 } = require("./logic.js");
 
 test("parseList splits on lines and commas, trims, and drops blanks", () => {
@@ -136,4 +143,83 @@ test("screenFromHash maps hashes to known screens, defaulting to home", () => {
   assert.equal(screenFromHash(""), "home");
   assert.equal(screenFromHash("#unknown"), "home");
   assert.equal(screenFromHash(undefined), "home");
+});
+
+test("profile ids are Tyler and Jackson", () => {
+  assert.deepEqual(PROFILE_IDS, ["tyler", "jackson"]);
+});
+
+test("Jackson defaults to the numbers 1 to 5", () => {
+  assert.deepEqual(DEFAULT_JACKSON.numbers.values, ["1", "2", "3", "4", "5"]);
+  assert.deepEqual(DEFAULT_NUMBERS, ["1", "2", "3", "4", "5"]);
+  assert.deepEqual(normalizeJackson(null), clone(DEFAULT_JACKSON));
+});
+
+test("normalizeStore gives both profiles defaults for empty input", () => {
+  const store = normalizeStore(null);
+  assert.deepEqual(store.profiles.tyler, clone(DEFAULT_DATA));
+  assert.deepEqual(store.profiles.jackson, clone(DEFAULT_JACKSON));
+});
+
+test("normalizeStore migrates old flat data into Tyler's profile", () => {
+  const store = normalizeStore({
+    name: "Weeks 9&10",
+    spelling: { words: ["cat", "dog"] },
+    tricky: { words: ["the", "because"] }
+  });
+  assert.equal(store.profiles.tyler.name, "Weeks 9&10");
+  assert.deepEqual(store.profiles.tyler.spelling.words, ["cat", "dog"]);
+  assert.deepEqual(store.profiles.tyler.tricky.words, ["the", "because"]);
+  assert.deepEqual(store.profiles.jackson, clone(DEFAULT_JACKSON));
+});
+
+test("normalizeStore keeps each profile's own data", () => {
+  const store = normalizeStore({
+    profiles: {
+      tyler: { name: "Tyler set", spelling: { words: ["sun"] } },
+      jackson: { name: "Numbers 1-3", numbers: { values: ["1", "2", "3"] } }
+    }
+  });
+  assert.equal(store.profiles.tyler.name, "Tyler set");
+  assert.deepEqual(store.profiles.tyler.spelling.words, ["sun"]);
+  assert.equal(store.profiles.jackson.name, "Numbers 1-3");
+  assert.deepEqual(store.profiles.jackson.numbers.values, ["1", "2", "3"]);
+});
+
+test("normalizeJackson filters invalid values and trims strings", () => {
+  const jackson = normalizeJackson({
+    name: "Numbers",
+    numbers: { values: ["1", 2, null, "", " 3 "] }
+  });
+  assert.equal(jackson.name, "Numbers");
+  assert.deepEqual(jackson.numbers.values, ["1", "2", "3"]);
+});
+
+test("normalizeJackson reseeds an empty list that was not deliberately cleared", () => {
+  const jackson = normalizeJackson({ numbers: { values: [] } });
+  assert.deepEqual(jackson.numbers.values, DEFAULT_NUMBERS);
+});
+
+test("normalizeJackson keeps an empty list that was deliberately cleared", () => {
+  const jackson = normalizeJackson({ numbers: { values: [], empty: true } });
+  assert.deepEqual(jackson.numbers, { values: [], empty: true });
+});
+
+test("routeUrl includes the profile and screen in the hash", () => {
+  assert.equal(routeUrl("/app/", null, "profiles"), "/app/");
+  assert.equal(routeUrl("/app/", "tyler", "home"), "/app/#tyler");
+  assert.equal(routeUrl("/app/", "jackson", "cards"), "/app/#jackson/cards");
+  assert.equal(routeUrl("/app/?x=1", "tyler", "manage"), "/app/?x=1#tyler/manage");
+});
+
+test("routeFromHash parses profiles, screens, and legacy links", () => {
+  assert.deepEqual(routeFromHash(""), { profile: null, screen: "profiles" });
+  assert.deepEqual(routeFromHash("#jackson"), { profile: "jackson", screen: "home" });
+  assert.deepEqual(routeFromHash("#jackson/cards"), { profile: "jackson", screen: "cards" });
+  assert.deepEqual(routeFromHash("#tyler/manage"), { profile: "tyler", screen: "manage" });
+  assert.deepEqual(routeFromHash("#cards"), { profile: "tyler", screen: "cards" });
+  assert.deepEqual(routeFromHash("#manage"), { profile: "tyler", screen: "manage" });
+  assert.deepEqual(routeFromHash("#jackson/nope"), { profile: "jackson", screen: "home" });
+  assert.deepEqual(routeFromHash("#nope"), { profile: null, screen: "profiles" });
+  assert.deepEqual(routeFromHash(undefined), { profile: null, screen: "profiles" });
 });

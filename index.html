@@ -16,10 +16,31 @@
 <body>
   <div id="app">
 
+    <!-- PROFILES -->
+    <section class="screen is-active" id="screen-profiles">
+      <header class="profile-head">
+        <h1 class="app-title">Who's learning?</h1>
+        <p class="app-sub">Choose a profile</p>
+      </header>
+
+      <div class="profile-list">
+        <button class="profile-btn" data-profile="tyler" aria-label="Tyler's homework">
+          <span class="profile-circle profile-circle--tyler">T</span>
+          <span class="profile-name">Tyler</span>
+        </button>
+        <button class="profile-btn" data-profile="jackson" aria-label="Jackson's homework">
+          <span class="profile-circle profile-circle--jackson">J</span>
+          <span class="profile-name">Jackson</span>
+        </button>
+      </div>
+    </section>
+
     <!-- HOME -->
-    <section class="screen is-active" id="screen-home">
+    <section class="screen" id="screen-home">
+      <button class="profile-avatar" id="home-profile" aria-label="Switch profile">T</button>
+
       <header class="home-head">
-        <h1 class="app-title">Tyler's Homework</h1>
+        <h1 class="app-title" id="home-title">Tyler's Homework</h1>
         <p class="app-sub" id="home-set-name"></p>
       </header>
 
@@ -35,6 +56,10 @@
         <button class="mode-btn" data-mode="tricky">
           <span class="mode-name">Tricky Words</span>
           <span class="mode-meta" id="home-tricky-meta"></span>
+        </button>
+        <button class="mode-btn" data-mode="numbers" hidden>
+          <span class="mode-name">Numbers</span>
+          <span class="mode-meta" id="home-numbers-meta"></span>
         </button>
       </div>
 
@@ -77,29 +102,34 @@
     <section class="screen" id="screen-manage">
       <header class="card-top">
         <button class="icon-btn" id="manage-back" aria-label="Back">&#8592;</button>
-        <span class="card-set-name">Manage words</span>
+        <span class="card-set-name" id="manage-title">Manage words</span>
         <span class="card-progress"></span>
       </header>
 
       <main class="manage-body">
-        <div class="field">
+        <div class="field" id="field-set-name">
           <label class="field-label" for="set-name">Set name</label>
           <input class="text-input" type="text" id="set-name" placeholder="e.g. Weeks 7&amp;8" />
         </div>
 
-        <div class="field">
+        <div class="field" id="field-spelling">
           <label class="field-label" for="spelling-input">Spelling words <span class="field-note">one per line</span></label>
           <textarea class="text-area" id="spelling-input" rows="6" spellcheck="false" placeholder="mum&#10;zap&#10;vans"></textarea>
         </div>
 
-        <div class="field">
+        <div class="field" id="field-phonics">
           <label class="field-label" for="phonics-input">Phonics sounds <span class="field-note">one per line</span></label>
           <textarea class="text-area" id="phonics-input" rows="4" spellcheck="false" placeholder="v&#10;w&#10;x"></textarea>
         </div>
 
-        <div class="field">
+        <div class="field" id="field-tricky">
           <label class="field-label" for="tricky-input">Tricky words <span class="field-note">one per line, practised 10 at a time</span></label>
           <textarea class="text-area" id="tricky-input" rows="6" spellcheck="false" placeholder="because&#10;beautiful&#10;children"></textarea>
+        </div>
+
+        <div class="field" id="field-numbers" hidden>
+          <label class="field-label" for="numbers-input">Numbers <span class="field-note">one per line</span></label>
+          <textarea class="text-area" id="numbers-input" rows="6" spellcheck="false" placeholder="1&#10;2&#10;3&#10;4&#10;5"></textarea>
         </div>
 
         <p class="manage-msg" id="manage-msg" role="status"></p>

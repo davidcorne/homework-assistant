@@ -1,7 +1,7 @@
 {
   "name": "Homework Assistant",
   "short_name": "Homework",
-  "description": "Flashcards for practising spelling words and phonics sounds.",
+  "description": "Flashcards for practising spelling, phonics, tricky words and numbers.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

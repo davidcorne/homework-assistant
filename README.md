@@ -1,7 +1,8 @@
 # Homework Assistant
 
-A tiny, offline-friendly flashcard site for practising spelling words and phonics
-sounds. Big paper-style cards, minimal interface, built for phone and tablet.
+A tiny, offline-friendly flashcard site for practising spelling words, phonics
+sounds, tricky words and numbers. Big paper-style cards, minimal interface,
+built for phone and tablet.
 
 No build step, no dependencies, no server. Just open `index.html`.
 
@@ -31,10 +32,15 @@ no network. Notes:
 
 ## Using it
 
-1. **Home** shows three buttons, *Spelling*, *Phonics* and *Tricky Words*, with
-   the current set name and how many cards are in each.
-2. **Cards** shows one big card at a time. Cards are always shuffled into a
-   random order each time. Your child reads each one out loud to you.
+1. **Profiles** is the entry screen: tap **T** for Tyler or **J** for Jackson.
+   The app always opens here, and the small profile circle in the top-right of a
+   home screen takes you back to the picker.
+2. **Home** shows the active child's homework. Tyler has *Spelling*, *Phonics*
+   and *Tricky Words*, each with the current set name and how many cards it has.
+   Jackson has *Numbers*, seeded with 1 to 5.
+3. **Cards** shows one big card at a time. Tyler's cards are shuffled into a
+   random order each time; Jackson's number cards stay in order. Your child
+   reads each one out loud to you.
    - Tap the card, or the right arrow, for the next card.
    - Left arrow goes back.
    - On a computer: `→` / `Space` = next, `←` = back, `Esc` = home.
@@ -42,19 +48,24 @@ no network. Notes:
      handed out ten at a time, so every word is covered before any repeat. The
      progress reads `7 / 10`. After the tenth card a **Finished!** panel appears
      and the app returns to Home.
-3. **Manage words** (link at the bottom of Home) is where you edit the words.
+4. **Manage words** (link at the bottom of Home) is where you edit the active
+   child's lists. Tyler's screen has spelling, phonics and tricky words;
+   Jackson's has a Numbers box.
 
 ## Adding a new set every 2 weeks
 
-1. Open **Manage words**.
-2. Give the set a name, e.g. `Weeks 7&8` (one name covers every list).
-3. Type or paste each list into its box, **one item per line** (commas also work).
-4. Press **Save**.
+1. Pick the child's profile on the entry screen.
+2. Open **Manage words**.
+3. Give the set a name, e.g. `Weeks 7&8` (one name covers every list).
+4. Type or paste each list into its box, **one item per line** (commas also work).
+5. Press **Save**.
 
 Blank lines and duplicate entries are ignored. The set name is shown on the Home
 screen and on the cards, so you can tell at a glance which fortnight you are on.
 
-Words are stored in the browser on the device you are using.
+Each profile has its own lists and name, stored in the browser on the device you
+are using. Tyler's existing saved words are carried over automatically the first
+time the new version loads.
 
 ## Tests
 
@@ -80,7 +91,7 @@ when you want installed devices to pick up a change.
 
 ## Files
 
-- `index.html` - the three screens
+- `index.html` - the profile picker, home, cards and manage screens
 - `styles.css` - the paper-card look
 - `logic.js` - pure, testable helpers shared by the app and the tests
 - `app.js` - DOM wiring, storage, card logic, service worker registration
@@ -96,3 +107,4 @@ when you want installed devices to pick up a change.
 - Phonics: `v, w, x, b, z`
 - Spelling: `mum, zap, vans, wins, wet, fox, zip, jug, vet`
 - Tricky Words: the full Year 1/2 tricky word list (practised in batches of ten)
+- Numbers (Jackson): `1, 2, 3, 4, 5`

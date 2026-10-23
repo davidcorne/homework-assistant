@@ -1,36 +1,65 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "homework-assistant.v1";
+  var STORAGE_KEY = "homework-assistant.v2";
+  var LEGACY_STORAGE_KEY = "homework-assistant.v1";
 
   var Logic = (typeof window !== "undefined" && window.HomeworkLogic) || {};
 
-  var normalize = Logic.normalize;
+  var normalizeStore = Logic.normalizeStore;
   var parseList = Logic.parseList;
   var shuffleArray = Logic.shuffleArray;
   var countText = Logic.countText;
   var sessionBatch = Logic.sessionBatch;
+  var routeUrl = Logic.routeUrl;
+  var routeFromHash = Logic.routeFromHash;
+
+  var PROFILES = {
+    tyler: {
+      initial: "T",
+      name: "Tyler",
+      title: "Tyler's Homework",
+      modes: ["spelling", "phonics", "tricky"]
+    },
+    jackson: {
+      initial: "J",
+      name: "Jackson",
+      title: "Jackson's Homework",
+      modes: ["numbers"]
+    }
+  };
 
   var els = {};
-  var data = null;
+  var store = null;
+  var activeProfile = null;
   var trickyPool = [];
   var doneTimer = null;
 
+  var deck = { profile: null, mode: null, items: [], index: 0 };
+
+  function data() {
+    return store.profiles[activeProfile];
+  }
+
   // ---- Storage ----------------------------------------------------------
 
-  function load() {
-    var stored = null;
+  function readStored(key) {
     try {
-      stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return JSON.parse(localStorage.getItem(key));
     } catch (e) {
-      stored = null;
+      return null;
     }
-    return normalize(stored);
+  }
+
+  function load() {
+    var stored = readStored(STORAGE_KEY);
+    if (!stored) stored = readStored(LEGACY_STORAGE_KEY);
+    return normalizeStore(stored);
   }
 
   function persist() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     } catch (e) {
       setMessage("Could not save on this device (storage blocked).", true);
     }
@@ -45,31 +74,53 @@
     }
   }
 
-  function screenUrl(name) {
-    return Logic.screenUrl(location.pathname + location.search, name);
+  function routeBase() {
+    return location.pathname + location.search;
+  }
+
+  function routeFor(name) {
+    return routeUrl(routeBase(), activeProfile, name);
   }
 
   function pushScreen(name) {
-    history.pushState({ screen: name }, "", screenUrl(name));
+    history.pushState({ profile: activeProfile, screen: name }, "", routeFor(name));
   }
 
-  function screenFromHash() {
-    return Logic.screenFromHash(location.hash);
+  function pushProfiles() {
+    activeProfile = null;
+    deck = { profile: null, mode: null, items: [], index: 0 };
+    history.pushState({ profile: null, screen: "profiles" }, "", routeBase());
+    showScreen("screen-profiles");
   }
 
   function goBack() {
-    if (history.state && history.state.screen && history.state.screen !== "home") {
+    if (history.state && history.state.profile && history.state.screen !== "profiles") {
       history.back();
-    } else {
+    } else if (activeProfile) {
       showScreen("screen-home");
+    } else {
+      showScreen("screen-profiles");
     }
   }
 
   function handlePopState(event) {
-    var screen = (event.state && event.state.screen) || screenFromHash();
-    if (screen === "cards" && deck.items.length) {
+    var route = event.state && event.state.profile !== undefined
+      ? event.state
+      : routeFromHash(location.hash);
+
+    if (!route || !route.profile || !PROFILES[route.profile] || route.screen === "profiles") {
+      activeProfile = null;
+      showScreen("screen-profiles");
+      return;
+    }
+
+    activeProfile = route.profile;
+    updateHome();
+
+    if (route.screen === "cards" && deck.profile === activeProfile && deck.items.length) {
       showScreen("screen-cards");
-    } else if (screen === "manage") {
+      renderCard();
+    } else if (route.screen === "manage") {
       populateManage();
       showScreen("screen-manage");
     } else {
@@ -77,21 +128,48 @@
     }
   }
 
+  function openProfile(id) {
+    if (!PROFILES[id]) return;
+
+    if (activeProfile !== id) {
+      trickyPool = [];
+      deck = { profile: null, mode: null, items: [], index: 0 };
+    }
+    activeProfile = id;
+    updateHome();
+    showScreen("screen-home");
+    pushScreen("home");
+  }
+
   function updateHome() {
-    els.homeSetName.textContent = data.name;
-    els.homeSpellingMeta.textContent = countText(data.spelling.words, "word");
-    els.homePhonicsMeta.textContent = countText(data.phonics.sounds, "sound");
-    els.homeTrickyMeta.textContent = countText(data.tricky.words, "word");
+    var profile = PROFILES[activeProfile];
+    var d = data();
+
+    els.homeTitle.textContent = profile.title;
+    els.homeProfile.textContent = profile.initial;
+    els.homeProfile.setAttribute("aria-label", "Switch profile. Currently " + profile.name);
+    els.homeSetName.textContent = d.name;
+    els.goManage.textContent = activeProfile === "jackson" ? "Manage numbers" : "Manage words";
+
+    els.homeSpellingMeta.textContent = d.spelling ? countText(d.spelling.words, "word") : "";
+    els.homePhonicsMeta.textContent = d.phonics ? countText(d.phonics.sounds, "sound") : "";
+    els.homeTrickyMeta.textContent = d.tricky ? countText(d.tricky.words, "word") : "";
+    els.homeNumbersMeta.textContent = d.numbers ? countText(d.numbers.values, "number") : "";
+
+    for (var i = 0; i < els.modeBtns.length; i++) {
+      var btn = els.modeBtns[i];
+      btn.hidden = profile.modes.indexOf(btn.getAttribute("data-mode")) === -1;
+    }
   }
 
   // ---- Cards ------------------------------------------------------------
 
-  var deck = { mode: null, items: [], index: 0 };
-
   function listForMode(mode) {
-    if (mode === "spelling") return data.spelling.words;
-    if (mode === "phonics") return data.phonics.sounds;
-    if (mode === "tricky") return data.tricky.words;
+    var d = data();
+    if (mode === "spelling") return d.spelling.words;
+    if (mode === "phonics") return d.phonics.sounds;
+    if (mode === "tricky") return d.tricky.words;
+    if (mode === "numbers") return d.numbers.values;
     return [];
   }
 
@@ -99,6 +177,7 @@
     if (mode === "spelling") return "spelling words";
     if (mode === "phonics") return "phonics sounds";
     if (mode === "tricky") return "tricky words";
+    if (mode === "numbers") return "numbers";
     return "words";
   }
 
@@ -106,7 +185,7 @@
   // handed out ten at a time so every word is covered before any repeats.
   function nextTrickyBatch() {
     if (!trickyPool.length) {
-      trickyPool = shuffleArray(data.tricky.words.slice());
+      trickyPool = shuffleArray(data().tricky.words.slice());
     }
     var batch = sessionBatch(trickyPool, Logic.BATCH_SIZE);
     trickyPool = trickyPool.slice(batch.length);
@@ -121,11 +200,13 @@
       return;
     }
     hideDone();
+    deck.profile = activeProfile;
     deck.mode = mode;
     deck.items = mode === "tricky" ? nextTrickyBatch() : list.slice();
-    shuffleArray(deck.items);
+    // Numbers stay in teaching order; every other deck is shuffled.
+    if (mode !== "numbers") shuffleArray(deck.items);
     deck.index = 0;
-    els.cardsName.textContent = data.name;
+    els.cardsName.textContent = data().name;
     showScreen("screen-cards");
     renderCard();
     pushScreen("cards");
@@ -135,13 +216,18 @@
     var total = deck.items.length;
     var isLast = deck.index === total - 1;
     var isTricky = deck.mode === "tricky";
+    var isNumbers = deck.mode === "numbers";
     els.cardWord.textContent = deck.items[deck.index];
     els.cardsProgress.textContent = (deck.index + 1) + " / " + total;
     els.cardsPrev.disabled = deck.index === 0;
     els.cardsNext.disabled = isLast && !isTricky;
     els.cardsNext.textContent = isLast && isTricky ? "✓" : "→";
     els.cardsNext.setAttribute("aria-label", isLast && isTricky ? "Finish" : "Next card");
-    els.cardsHint.textContent = isLast ? (isTricky ? "Last one - tap to finish" : "Last one") : "Say it out loud";
+    if (isLast) {
+      els.cardsHint.textContent = isTricky ? "Last one - tap to finish" : "Last one";
+    } else {
+      els.cardsHint.textContent = isNumbers ? "Say the number out loud" : "Say it out loud";
+    }
     fitCard();
   }
 
@@ -153,7 +239,9 @@
 
     word.style.fontSize = "";
     var size = card.clientHeight - 48;
-    if (deck.mode === "phonics" || deck.mode === "tricky") size = Math.min(size, 150);
+    if (deck.mode === "phonics" || deck.mode === "tricky" || deck.mode === "numbers") {
+      size = Math.min(size, 150);
+    }
     word.style.fontSize = size + "px";
 
     var guard = 0;
@@ -206,10 +294,22 @@
   // ---- Manage -----------------------------------------------------------
 
   function populateManage() {
-    els.setName.value = data.name;
-    els.spellingInput.value = (data.spelling.words || []).join("\n");
-    els.phonicsInput.value = (data.phonics.sounds || []).join("\n");
-    els.trickyInput.value = (data.tricky.words || []).join("\n");
+    var d = data();
+    var profile = PROFILES[activeProfile];
+
+    els.manageTitle.textContent = activeProfile === "jackson" ? "Manage numbers" : "Manage words";
+    els.fieldSetName.hidden = false;
+    els.fieldSpelling.hidden = profile.modes.indexOf("spelling") === -1;
+    els.fieldPhonics.hidden = profile.modes.indexOf("phonics") === -1;
+    els.fieldTricky.hidden = profile.modes.indexOf("tricky") === -1;
+    els.fieldNumbers.hidden = profile.modes.indexOf("numbers") === -1;
+
+    els.setName.value = d.name;
+    els.setName.placeholder = activeProfile === "jackson" ? "Numbers 1-5" : "e.g. Weeks 7&8";
+    els.spellingInput.value = (d.spelling ? d.spelling.words || [] : []).join("\n");
+    els.phonicsInput.value = (d.phonics ? d.phonics.sounds || [] : []).join("\n");
+    els.trickyInput.value = (d.tricky ? d.tricky.words || [] : []).join("\n");
+    els.numbersInput.value = (d.numbers ? d.numbers.values || [] : []).join("\n");
   }
 
   function openManage() {
@@ -219,6 +319,24 @@
   }
 
   function saveManage() {
+    var d = data();
+
+    if (activeProfile === "jackson") {
+      var numbers = parseList(els.numbersInput.value);
+      if (!numbers.length) {
+        setMessage("Add at least one number before saving.", true);
+        return;
+      }
+
+      d.name = els.setName.value.trim() || "Numbers 1-5";
+      d.numbers = { values: numbers };
+
+      persist();
+      updateHome();
+      setMessage("Saved. " + numbers.length + " numbers.", false);
+      return;
+    }
+
     var words = parseList(els.spellingInput.value);
     var sounds = parseList(els.phonicsInput.value);
     var tricky = parseList(els.trickyInput.value);
@@ -228,10 +346,10 @@
       return;
     }
 
-    data.name = els.setName.value.trim() || "Untitled set";
-    data.spelling.words = words;
-    data.phonics.sounds = sounds;
-    data.tricky = { words: tricky, empty: tricky.length === 0 };
+    d.name = els.setName.value.trim() || "Untitled set";
+    d.spelling.words = words;
+    d.phonics.sounds = sounds;
+    d.tricky = { words: tricky, empty: tricky.length === 0 };
     trickyPool = [];
 
     persist();
@@ -247,10 +365,14 @@
   // ---- Init -------------------------------------------------------------
 
   function cacheEls() {
+    els.homeTitle = document.getElementById("home-title");
+    els.homeProfile = document.getElementById("home-profile");
     els.homeSetName = document.getElementById("home-set-name");
     els.homeSpellingMeta = document.getElementById("home-spelling-meta");
     els.homePhonicsMeta = document.getElementById("home-phonics-meta");
     els.homeTrickyMeta = document.getElementById("home-tricky-meta");
+    els.homeNumbersMeta = document.getElementById("home-numbers-meta");
+    els.modeBtns = document.querySelectorAll(".mode-btn");
     els.goManage = document.getElementById("go-manage");
 
     els.cardsBack = document.getElementById("cards-back");
@@ -266,22 +388,36 @@
     els.cardDoneHome = document.getElementById("card-done-home");
 
     els.manageBack = document.getElementById("manage-back");
+    els.manageTitle = document.getElementById("manage-title");
+    els.fieldSetName = document.getElementById("field-set-name");
+    els.fieldSpelling = document.getElementById("field-spelling");
+    els.fieldPhonics = document.getElementById("field-phonics");
+    els.fieldTricky = document.getElementById("field-tricky");
+    els.fieldNumbers = document.getElementById("field-numbers");
     els.setName = document.getElementById("set-name");
     els.spellingInput = document.getElementById("spelling-input");
     els.phonicsInput = document.getElementById("phonics-input");
     els.trickyInput = document.getElementById("tricky-input");
+    els.numbersInput = document.getElementById("numbers-input");
     els.manageMsg = document.getElementById("manage-msg");
     els.manageSave = document.getElementById("manage-save");
   }
 
   function bindEvents() {
-    var modeBtns = document.querySelectorAll(".mode-btn");
-    for (var i = 0; i < modeBtns.length; i++) {
-      modeBtns[i].addEventListener("click", function () {
+    var profileBtns = document.querySelectorAll(".profile-btn");
+    for (var p = 0; p < profileBtns.length; p++) {
+      profileBtns[p].addEventListener("click", function () {
+        openProfile(this.getAttribute("data-profile"));
+      });
+    }
+
+    for (var i = 0; i < els.modeBtns.length; i++) {
+      els.modeBtns[i].addEventListener("click", function () {
         openDeck(this.getAttribute("data-mode"));
       });
     }
 
+    els.homeProfile.addEventListener("click", pushProfiles);
     els.goManage.addEventListener("click", function () { setMessage("", false); openManage(); });
     els.cardsBack.addEventListener("click", goBack);
     els.manageBack.addEventListener("click", goBack);
@@ -321,11 +457,11 @@
 
   function init() {
     cacheEls();
-    data = load();
+    store = load();
     bindEvents();
-    updateHome();
-    showScreen("screen-home");
-    history.replaceState({ screen: "home" }, "", screenUrl("home"));
+    activeProfile = null;
+    showScreen("screen-profiles");
+    history.replaceState({ profile: null, screen: "profiles" }, "", routeBase());
     registerServiceWorker();
   }
 
