@@ -34,10 +34,20 @@
     }
   };
 
+  var DEFAULT_NUMBERS = ["1", "2", "3", "4", "5"];
+
+  var PROFILE_IDS = ["tyler", "jackson"];
+
+  var DEFAULT_JACKSON = {
+    name: "Numbers 1-5",
+    numbers: { values: DEFAULT_NUMBERS.slice() }
+  };
+
   function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
 
+  // Normalises one Tyler-style profile (or the old flat, single-profile data).
   function normalize(raw) {
     var out = clone(DEFAULT_DATA);
     if (!raw || typeof raw !== "object") return out;
@@ -73,6 +83,45 @@
       out.tricky = { words: clone(DEFAULT_TRICKY_WORDS) };
     }
     return out;
+  }
+
+  function normalizeJackson(raw) {
+    var out = clone(DEFAULT_JACKSON);
+    if (!raw || typeof raw !== "object") return out;
+
+    if (typeof raw.name === "string") {
+      out.name = raw.name;
+    }
+
+    if (raw.numbers && typeof raw.numbers === "object") {
+      if (raw.numbers.empty === true) {
+        out.numbers = { values: [], empty: true };
+      } else if (Array.isArray(raw.numbers.values)) {
+        var values = raw.numbers.values.filter(function (v) {
+          return typeof v === "string" || typeof v === "number";
+        }).map(function (v) {
+          return String(v).trim();
+        }).filter(function (v) {
+          return !!v;
+        });
+        if (values.length) {
+          out.numbers = { values: values };
+        }
+      }
+    }
+    return out;
+  }
+
+  // The stored shape is now per-profile. Old flat data is Tyler's profile so
+  // existing devices keep their saved words after the upgrade.
+  function normalizeStore(raw) {
+    var isStore = raw && typeof raw === "object" && raw.profiles && typeof raw.profiles === "object";
+    return {
+      profiles: {
+        tyler: normalize(isStore ? raw.profiles.tyler : raw),
+        jackson: normalizeJackson(isStore ? raw.profiles.jackson : null)
+      }
+    };
   }
 
   function parseList(text) {
@@ -118,17 +167,50 @@
     return h === "cards" || h === "manage" ? h : "home";
   }
 
+  function routeUrl(base, profileId, screen) {
+    if (!profileId) return base;
+    var name = screen || "home";
+    return base + "#" + profileId + (name === "home" ? "" : "/" + name);
+  }
+
+  function routeFromHash(hash) {
+    var h = String(hash || "").replace(/^#/, "");
+    if (!h) return { profile: null, screen: "profiles" };
+
+    var parts = h.split("/");
+    // Old bookmarks and links still land on Tyler's screens.
+    if (parts[0] === "cards" || parts[0] === "manage") {
+      return { profile: "tyler", screen: parts[0] };
+    }
+    if (PROFILE_IDS.indexOf(parts[0]) === -1) {
+      return { profile: null, screen: "profiles" };
+    }
+
+    var screen = parts[1] || "home";
+    if (screen !== "home" && screen !== "cards" && screen !== "manage") {
+      screen = "home";
+    }
+    return { profile: parts[0], screen: screen };
+  }
+
   return {
     BATCH_SIZE: BATCH_SIZE,
     DEFAULT_TRICKY_WORDS: DEFAULT_TRICKY_WORDS,
     DEFAULT_DATA: DEFAULT_DATA,
+    DEFAULT_NUMBERS: DEFAULT_NUMBERS,
+    DEFAULT_JACKSON: DEFAULT_JACKSON,
+    PROFILE_IDS: PROFILE_IDS,
     clone: clone,
     normalize: normalize,
+    normalizeJackson: normalizeJackson,
+    normalizeStore: normalizeStore,
     parseList: parseList,
     shuffleArray: shuffleArray,
     countText: countText,
     sessionBatch: sessionBatch,
     screenUrl: screenUrl,
-    screenFromHash: screenFromHash
+    screenFromHash: screenFromHash,
+    routeUrl: routeUrl,
+    routeFromHash: routeFromHash
   };
 });
