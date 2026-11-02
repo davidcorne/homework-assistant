@@ -203,8 +203,7 @@
     deck.profile = activeProfile;
     deck.mode = mode;
     deck.items = mode === "tricky" ? nextTrickyBatch() : list.slice();
-    // Numbers stay in teaching order; every other deck is shuffled.
-    if (mode !== "numbers") shuffleArray(deck.items);
+    shuffleArray(deck.items);
     deck.index = 0;
     els.cardsName.textContent = data().name;
     showScreen("screen-cards");

@@ -38,9 +38,9 @@ no network. Notes:
 2. **Home** shows the active child's homework. Tyler has *Spelling*, *Phonics*
    and *Tricky Words*, each with the current set name and how many cards it has.
    Jackson has *Numbers*, seeded with 1 to 5.
-3. **Cards** shows one big card at a time. Tyler's cards are shuffled into a
-   random order each time; Jackson's number cards stay in order. Your child
-   reads each one out loud to you.
+3. **Cards** shows one big card at a time. Every deck, including Jackson's
+   numbers, is shuffled into a random order each time. Your child reads each one
+   out loud to you.
    - Tap the card, or the right arrow, for the next card.
    - Left arrow goes back.
    - On a computer: `→` / `Space` = next, `←` = back, `Esc` = home.
